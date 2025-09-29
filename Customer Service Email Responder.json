@@ -1,0 +1,361 @@
+{
+  "name": "Customer Service Email Responder",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        240
+      ],
+      "id": "14ebf62e-d788-4306-8e1e-ec8ab443417d",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pZRhGYBjNDZMWYnh",
+          "name": "Gmail account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Customer Support",
+              "description": "An email that is related to helping out a customer. They are asking questions about our policies or questions about our products or services"
+            },
+            {
+              "category": "Other",
+              "description": "Any email that is not customer support related"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        240
+      ],
+      "id": "1c9212ea-b71a-46bb-9f4c-2f309f5f1aa0",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        304,
+        464
+      ],
+      "id": "e1624876-b759-4f72-bb8e-edd680435fcc",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ETXiZgjChtOZcphX",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        640,
+        384
+      ],
+      "id": "c4e3ec79-c3bd-4d50-bc2f-6bad8af04cf7",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "# Overview\nYou are a customer support agent for Tech Haven. Your job is to respond to \nincoming emails with relevant information using your knowledgeBase tool.\n\n## Instructions\n- Your output should be friendly\n- Sign off as Mr. Helpful from Tech Haven Solutions\n\n## Output\n-Output only the body of the email\n\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        576,
+        -16
+      ],
+      "id": "e3fd93fb-49fa-46ec-a51a-41bbfd14896f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        656,
+        208
+      ],
+      "id": "49fd52eb-2886-4200-b8da-9f8b5db6030d",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ETXiZgjChtOZcphX",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Call this tool to access the policy and FAQ",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "demo2",
+          "mode": "list",
+          "cachedResultName": "demo2"
+        },
+        "options": {
+          "pineconeNamespace": "FAQ"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        928,
+        0
+      ],
+      "id": "7b7a91ed-623a-4078-8b27-0eaf6cfee6b6",
+      "name": "knowledgeBase",
+      "credentials": {
+        "pineconeApi": {
+          "id": "2xV846y83GPKITGo",
+          "name": "PineconeApi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        208
+      ],
+      "id": "c3d1a75e-e179-4c00-a5ea-ccc617487852",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ETXiZgjChtOZcphX",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger').item.json.id }}",
+        "emailType": "text",
+        "message": "={{ $json.output }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1168,
+        224
+      ],
+      "id": "0917f76a-770d-4bf3-a8ff-4be684c73201",
+      "name": "Reply to a message",
+      "webhookId": "58df2cce-6136-42db-9960-31c67f66d7d5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "pZRhGYBjNDZMWYnh",
+          "name": "Gmail account 3"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Gmail Trigger": [
+      {
+        "json": {
+          "id": "1990f2e1bdf60f41",
+          "threadId": "1990f2e1bdf60f41",
+          "labelIds": [
+            "UNREAD",
+            "IMPORTANT",
+            "CATEGORY_PERSONAL",
+            "INBOX"
+          ],
+          "sizeEstimate": 5747,
+          "headers": {
+            "delivered-to": "Delivered-To: udaaybhaskar@gmail.com",
+            "received": "Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])\r\n        by mx.google.com with SMTPS id d2e1a72fcca58-7727154ffa4sor3151491b3a.0.2025.09.03.03.45.03\r\n        for <udaaybhaskar@gmail.com>\r\n        (Google Transport Security);\r\n        Wed, 03 Sep 2025 03:45:04 -0700 (PDT)",
+            "x-received": "X-Received: by 2002:a05:6a21:9986:b0:246:5be:ca6e with SMTP id\r\n adf61e73a8af0-24605beccdbmr4416621637.16.1756896303142; Wed, 03 Sep 2025\r\n 03:45:03 -0700 (PDT)",
+            "arc-seal": "ARC-Seal: i=1; a=rsa-sha256; t=1756896304; cv=none;\r\n        d=google.com; s=arc-20240605;\r\n        b=YD0Tlvy22iws9y6YOZGHzi6El+j3UyuGsZyP3moARuHjSJx5f5Gr1MrAGZ4iqNDX03\r\n         OKc2qHnwe8X3vRsLLNXeRaMjmEV1IyZjoOMsfzLqmQqa7MPjXwywPwdI6ilf7JYSXgzg\r\n         8VlSpZRVkzN9dTCJer4/w7rU75c72cyE8/Tarr9RiTN2tv+KEAQGRv1fZ2MV+iBd6sHd\r\n         1DFbndHTBgUgXFaulVCeR7cnb/hHnFIs7ss57P/XiVUZBno2J8gxgzf0MJZD9/3+eQwJ\r\n         nKBhPy1n2Jrjeupg3sCh31t14RqzQJNWBpnr1Tm6z/zRI82E/ceas5CPRuh3XF/j8N6X\r\n         /sEA==",
+            "arc-message-signature": "ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;\r\n        h=to:subject:message-id:date:from:mime-version:dkim-signature;\r\n        bh=WhweXl7f9B1G1tmaXzeRkWtyn8jf1Vqh3iR3Dm/+7/M=;\r\n        fh=HrPCMdkzXo6sFY4FuCb1IrOeErZXGBZhSZUVGvQb8oc=;\r\n        b=S2rMFBoBJO4O4bTpp2SbxN51oeCM+00K0H46TzexSp4kar9cGFnj5Z4HtkV/EL9i6B\r\n         380puMcQTOEQVxTW9Usrx7Dw7hZDjuQBIPTL86wkWtS0FyXk8osjCQb9QQ5eN29l8wjT\r\n         Z68oPjonTRiMRHw3ODkdtrpnDg9YAnJKtHFklzA27JW5rMN+tFxT8pnfaHpBRGCmARx0\r\n         nnZQSuDwsOatmUV58omvyD2Knf09tRC9pdLQ3LY7AbW6o2Z0PpMAB3e2PNUa4iKCBwf3\r\n         7KfjFtcssHW8jmT8fGO8AQ+vWb+jh8iL9VExOBN3d3meiuaoKG+6O3JjtRkOZ0Gjw6/G\r\n         QObQ==;\r\n        dara=google.com",
+            "arc-authentication-results": "ARC-Authentication-Results: i=1; mx.google.com;\r\n       dkim=pass header.i=@gmail.com header.s=20230601 header.b=dyr+EFFG;\r\n       spf=pass (google.com: domain of udaybhaskar2646@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=udaybhaskar2646@gmail.com;\r\n       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com;\r\n       dara=pass header.i=@gmail.com",
+            "return-path": "Return-Path: <udaybhaskar2646@gmail.com>",
+            "received-spf": "Received-SPF: pass (google.com: domain of udaybhaskar2646@gmail.com designates 209.85.220.41 as permitted sender) client-ip=209.85.220.41;",
+            "authentication-results": "Authentication-Results: mx.google.com;\r\n       dkim=pass header.i=@gmail.com header.s=20230601 header.b=dyr+EFFG;\r\n       spf=pass (google.com: domain of udaybhaskar2646@gmail.com designates 209.85.220.41 as permitted sender) smtp.mailfrom=udaybhaskar2646@gmail.com;\r\n       dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com;\r\n       dara=pass header.i=@gmail.com",
+            "dkim-signature": "DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;\r\n        d=gmail.com; s=20230601; t=1756896303; x=1757501103; dara=google.com;\r\n        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject\r\n         :date:message-id:reply-to;\r\n        bh=WhweXl7f9B1G1tmaXzeRkWtyn8jf1Vqh3iR3Dm/+7/M=;\r\n        b=dyr+EFFGP73Wm3K2HOn/Y+0lfYn6WUv5A8JalcTw+tvCOBbKtXMIhsMRidcJeQcAsu\r\n         V9ZtI6GQ2iHCVOXjWNq5CgyM61a+E/HiW5Qnjir+FRvuKJkrPMpJbS9Um7c3ddObiKr0\r\n         mXAH2cTp15MpKrF24M7sZZX4l6YKOzZAW1y0J084YoktP5lYJqia2RkwqAsfyt/d59ue\r\n         v65OvNnn6HGd/p6LKX0tS6CR/xjn4UFmTEgsSyvqCYjAEcIIGbUcE9h/ObIJwAFvMjlT\r\n         1dnCT3OLQJuyHJmCqFwZqUtuPm2DmXR8Jty5x1Ib2hCRwwPD5GwiObX3EnTBU4D8aj8m\r\n         ggcw==",
+            "x-google-dkim-signature": "X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;\r\n        d=1e100.net; s=20230601; t=1756896303; x=1757501103;\r\n        h=to:subject:message-id:date:from:mime-version:x-gm-message-state\r\n         :from:to:cc:subject:date:message-id:reply-to;\r\n        bh=WhweXl7f9B1G1tmaXzeRkWtyn8jf1Vqh3iR3Dm/+7/M=;\r\n        b=l3nsEGKyh0njmFTPmDvrQQglmSntJY+ynzYF2oEjWrSQPKt2y3hMhlTNQjha3Li4Lr\r\n         qcMrYdlnQHKYcw9Wv2/Zv8VsFHqwszYQaQL8kIiYaNHE4a8p6lQXOye5FdsGBOyp49c1\r\n         pgCkTCv8z3Pv0hr8Nwo9HbTfvPfutZG+9BVEidlM6DwE5UfW7lGuRl562y1GmWt9L8Dz\r\n         KgS17XypQo4ZjANwCp3lj/M1wR1XR5S6k4K2mmUA+W0RsFo/5I3FpRBfT/yqMnBLFOlT\r\n         YvS7bWKk2Im9xcol7G/ITu3hIfh7d1EEO05/Ey0dxFYl5PrTVNr1vuRFEzm64suQbXmS\r\n         GZ6A==",
+            "x-gm-message-state": "X-Gm-Message-State: AOJu0YyUvnS+N1K7Fzpiu3V5/q6MNy/VzWTar47KaQ7uib31icZR1J3Q\r\n\t93hCY/1M6TDD8dcu1mbdfP1B3dA4OWis8XkEvTsj82JjwM6ORAnXMEF7rpci3rEuvDBgAkwzZl1\r\n\tDf06WzS8c5Mu/mUvOddCfoZZVJTRC/iz2Hhk1",
+            "x-gm-gg": "X-Gm-Gg: ASbGncte/i61lEHMsr9do3YBSioMpKhKMF/QvS8sa/jDiDVLROfIlhskCtPoca/qN+O\r\n\tst3AR9+FH+tJImBjY8GePnpmOX4e1lv3RTVUB+wNTT+6NQE0c2n9SfTXMmPkGcI0nyxw4rmno+R\r\n\tLMzruHota4T/Prb71PY7YZTFJJaiIwHpVDRfmoz1Q6o8XpDqXwMfHkWeAhmAtggex1rbInv899x\r\n\tUkCyMfatjy1H3+jFi1GpfQYBOlQYHsfO/BA1I5gD/PHKnQagw==",
+            "x-google-smtp-source": "X-Google-Smtp-Source: AGHT+IH4l5h9ZznBtzOQKAg/cOFDXOw39RWZpDhOn6fkJkypMgeJlz2CyLZjwCuqc0/my9RJMvtIpxcKHd2uN2ocuJg=",
+            "mime-version": "MIME-Version: 1.0",
+            "from": "From: Uday Bhaskar <udaybhaskar2646@gmail.com>",
+            "date": "Date: Wed, 3 Sep 2025 14:44:51 +0400",
+            "x-gm-features": "X-Gm-Features: Ac12FXzTsq_rj1YByqlCI7wuAfQt4jUp2a-DhTRv5RXvFCZyRXkbKbF58AesSNU",
+            "message-id": "Message-ID: <CAKAq7JfoSqOTq6pLcgws0=GWWBLmyyQOkQ8OxzwwXZcF6TN0JA@mail.gmail.com>",
+            "subject": "Subject: Policy check",
+            "to": "To: \"udaaybhaskar@gmail.com\" <udaaybhaskar@gmail.com>",
+            "content-type": "Content-Type: multipart/alternative; boundary=\"0000000000000e5c11063de34cc2\""
+          },
+          "html": "<div dir=\"auto\">Hello,<div dir=\"auto\">What is your privacy policy?</div></div>\n",
+          "text": "Hello,\nWhat is your privacy policy?\n",
+          "textAsHtml": "<p>Hello,<br/>What is your privacy policy?</p>",
+          "subject": "Policy check",
+          "date": "2025-09-03T10:44:51.000Z",
+          "to": {
+            "value": [
+              {
+                "address": "udaaybhaskar@gmail.com",
+                "name": ""
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><a href=\"mailto:udaaybhaskar@gmail.com\" class=\"mp_address_email\">udaaybhaskar@gmail.com</a></span>",
+            "text": "udaaybhaskar@gmail.com"
+          },
+          "from": {
+            "value": [
+              {
+                "address": "udaybhaskar2646@gmail.com",
+                "name": "Uday Bhaskar"
+              }
+            ],
+            "html": "<span class=\"mp_address_group\"><span class=\"mp_address_name\">Uday Bhaskar</span> &lt;<a href=\"mailto:udaybhaskar2646@gmail.com\" class=\"mp_address_email\">udaybhaskar2646@gmail.com</a>&gt;</span>",
+            "text": "\"Uday Bhaskar\" <udaybhaskar2646@gmail.com>"
+          },
+          "messageId": "<CAKAq7JfoSqOTq6pLcgws0=GWWBLmyyQOkQ8OxzwwXZcF6TN0JA@mail.gmail.com>"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "knowledgeBase": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "knowledgeBase",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Reply to a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "20984ea8-1738-4210-aeb0-57b1f8cf9cbd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dcd48f0a64126c21c593608ca1423e67a2ff8c78f97cd825b1984bee0b463748"
+  },
+  "id": "vk2QN29sztnPhquO",
+  "tags": []
+}
